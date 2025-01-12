@@ -322,6 +322,64 @@ def collapse_sequence(seq):
         prev_char = char
     return result
 
+def forward_ctc(pred, target):
+    """
+    Computes the forward probability using the CTC forward algorithm.
+    Args:
+        pred (np.array): Probability matrix of shape (T, C) where T is the number of time steps
+                         and C is the number of classes (includes blank).
+        target (list): Expanded target sequence with blanks included (e.g., '^a^b^a^').
+    Returns:
+        float: The total probability of the sequence.
+    """
+    T, C = pred.shape  # Time steps and number of classes
+    L = len(target)    # Length of the expanded target sequence
+
+    # Initialize alpha matrix
+    alpha = np.zeros((T, L), dtype=np.float32)
+
+    # Initialize at time step 0
+    alpha[0, 0] = pred[0, target[0]]  # First blank
+    alpha[0, 1] = pred[0, target[1]]  # First target character 'a'
+
+    # Forward computation
+    for t in range(1, T):  # Iterate over time steps
+        for s in range(L):  # Iterate over states in the target sequence
+            # Transition from the same state
+            alpha[t, s] += alpha[t - 1, s]
+
+            # Transition from the previous state (diagonal transition)
+            if s > 0:
+                alpha[t, s] += alpha[t - 1, s - 1]
+
+            # Skip transition (e.g., blank to target)
+            if s > 1 and target[s] != target[s - 2]:
+                alpha[t, s] += alpha[t - 1, s - 2]
+
+            # Multiply by the probability of the current label
+            alpha[t, s] *= pred[t, target[s]]
+
+    # Sum the probabilities of the final two states
+    return alpha[-1, -1] + alpha[-1, -2]
+    
+# Plot the prediction matrix
+def plot_pred_matrix(pred, alphabet):
+    """
+    Plots the prediction matrix with label mappings.
+    Args:
+        pred (np.array): Prediction matrix of shape (T, C).
+        alphabet (dict): Mapping of label indices to characters.
+    """
+    plt.figure(figsize=(8, 6))
+    plt.imshow(pred, cmap="hot", interpolation="nearest")
+    plt.colorbar(label="Probability")
+    plt.xticks(ticks=np.arange(len(alphabet)), labels=[alphabet[i] for i in range(len(alphabet))])
+    plt.yticks(ticks=np.arange(pred.shape[0]), labels=[f"t={i}" for i in range(pred.shape[0])])
+    plt.xlabel("Labels")
+    plt.ylabel("Time Step")
+    plt.title("Prediction Matrix Heatmap")
+    plt.show()
+
 
 if __name__ == "__main__":
 
@@ -458,6 +516,8 @@ if __name__ == "__main__":
     # Calculate the probability
     sequence_prob = forward_ctc(pred, expanded_target)
     print(f"Probability of the sequence 'aba': {sequence_prob}") #  0.08880001306533813
+
+    plot_pred_matrix(pred, alphabet)
     
     
     

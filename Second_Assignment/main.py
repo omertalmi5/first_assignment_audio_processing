@@ -448,6 +448,13 @@ def plot_backtrace(backtrace, path, pred, alphabet):
     plt.legend()
     plt.show()
 
+def create_expanded_target(text, labels):
+    expanded_target = [labels['^']]  # Start with a blank symbol
+    for char in text:
+        expanded_target.append(labels[char])  # Add the character's index
+        expanded_target.append(labels['^'])  # Add a blank symbol after each character
+    return expanded_target
+
 if __name__ == "__main__":
 
     #Q1
@@ -592,6 +599,20 @@ if __name__ == "__main__":
     plot_backtrace(backtrace, path, pred, alphabet)
     print(f"Most probable path probability: {max_prob}") # 0.04032000154256821
     print(f"Most probable path: {path}") # [1, 3, 3, 5, 6] 
+
+    import pickle as pkl
+    # Question 7
+    # Load the data
+    with open('force_align.pkl', 'rb') as f:
+        data = pkl.load(f)
+    labels = {v: k for k, v in data['label_mapping'].items()}
+    text_to_align = data['text_to_align']
+    expanded_target = create_expanded_target(text_to_align, labels)
+    max_prob, backtrace, path = forward_ctc_max(data['acoustic_model_out_probs'], expanded_target)
+    plot_aligned_sequence(data['acoustic_model_out_probs'], path, expanded_target, data['label_mapping'])
+    plot_backtrace(backtrace, path, data['acoustic_model_out_probs'], data['label_mapping'])
+
+
     
 
 

@@ -380,6 +380,73 @@ def plot_pred_matrix(pred, alphabet):
     plt.title("Prediction Matrix Heatmap")
     plt.show()
 
+def forward_ctc_max(pred, target):
+    T, C = pred.shape  
+    L = len(target)    
+
+    alpha = np.zeros((T, L), dtype=np.float32)
+    backtrace = np.zeros((T, L), dtype=int)
+
+    alpha[0, 0] = pred[0, target[0]] 
+    alpha[0, 1] = pred[0, target[1]]
+
+    for t in range(1, T):  
+        for s in range(L):
+            max_prob, prev_state = alpha[t - 1, s], s
+
+            if s > 0 and alpha[t - 1, s - 1] > max_prob:
+                max_prob, prev_state = alpha[t - 1, s - 1], s - 1
+
+            if s > 1 and target[s] != target[s - 2] and alpha[t - 1, s - 2] > max_prob:
+                max_prob, prev_state = alpha[t - 1, s - 2], s - 2
+
+            alpha[t, s] = max_prob * pred[t, target[s]]
+            backtrace[t, s] = prev_state
+
+    final_probs = [alpha[-1, -1], alpha[-1, -2]] 
+    final_state = -1 if final_probs[0] >= final_probs[1] else -2
+    max_prob = final_probs[0] if final_state == -1 else final_probs[1]
+
+    path = []
+    s = final_state + L
+    for t in reversed(range(T)):
+        path.append(s)
+        s = backtrace[t, s]
+
+    return max_prob, backtrace, list(reversed(path))
+
+
+def plot_aligned_sequence(pred, path, expanded_target, alphabet):
+    plt.figure(figsize=(10, 6))
+    plt.imshow(pred, cmap="hot", interpolation="nearest")
+    plt.colorbar(label="Probability")
+    plt.xticks(ticks=np.arange(len(alphabet)), labels=[alphabet[i] for i in alphabet])
+    plt.yticks(ticks=np.arange(pred.shape[0]), labels=[f"t={i}" for i in range(pred.shape[0])])
+    plt.xlabel("Labels")
+    plt.ylabel("Time Step")
+    plt.title("Aligned Sequence on Prediction Matrix")
+
+    for t, s in enumerate(path):
+        label = alphabet[expanded_target[s]]
+        plt.text(s, t, label, color="white", ha="center", va="center")
+
+    plt.show()
+
+def plot_backtrace(backtrace, path, pred, alphabet):
+    plt.figure(figsize=(10, 8))
+    plt.imshow(backtrace, cmap="cool", interpolation="nearest")
+    plt.colorbar(label="Backtrace State")
+    plt.title("Backtrace Matrix with Alignment Path")
+    plt.xlabel("Target States")
+    plt.ylabel("Time Steps")
+
+    for t, s in enumerate(path):
+        plt.scatter(s, t, color="red", label="Most Probable Path" if t == 0 else "")
+
+    plt.xticks(ticks=np.arange(len(alphabet)), labels=[alphabet[i] for i in alphabet])
+    plt.yticks(ticks=np.arange(pred.shape[0]), labels=[f"t={i}" for i in range(pred.shape[0])])
+    plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
 
@@ -518,8 +585,13 @@ if __name__ == "__main__":
     print(f"Probability of the sequence 'aba': {sequence_prob}") #  0.08880001306533813
 
     plot_pred_matrix(pred, alphabet)
-    
-    
+
+    # Question 6
+    max_prob, backtrace, path = forward_ctc_max(pred, expanded_target)
+    plot_aligned_sequence(pred, path, expanded_target, alphabet)
+    plot_backtrace(backtrace, path, pred, alphabet)
+    print(f"Most probable path probability: {max_prob}")
+    print(f"Most probable path: {path}")
     
 
 

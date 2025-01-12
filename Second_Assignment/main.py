@@ -438,9 +438,29 @@ if __name__ == "__main__":
     precision = calc_classification_precision(evaluation_distance_matrix, threshold_value)
     print(f"Classification Precision: {precision:.4f}")
 
+    # Question 5
+    import numpy as np
 
-
-
+    # Prediction matrix
+    pred = np.zeros((5, 3), dtype=np.float32)
+    pred[0] = [0.8, 0.2, 0.0]
+    pred[1] = [0.2, 0.8, 0.0]
+    pred[2] = [0.3, 0.7, 0.0]
+    pred[3] = [0.09, 0.8, 0.11]
+    pred[4] = [0.0, 0.0, 1.0]
+    
+    # Alphabet label mapping
+    alphabet = {0: 'a', 1: 'b', 2: '^'}  # ^ is blank
+    
+    # Target sequence "aba"
+    # Collapsed target with blanks: ^a^b^a^
+    expanded_target = [2, 0, 2, 1, 2, 0, 2]  # Indices for '^', 'a', '^', 'b', '^', 'a', '^'
+    # Calculate the probability
+    sequence_prob = forward_ctc(pred, expanded_target)
+    print(f"Probability of the sequence 'aba': {sequence_prob}") #  0.08880001306533813
+    
+    
+    
 
 
 

@@ -313,6 +313,15 @@ def normalize_all_audio_segments():
             output_path = os.path.join(output_dir, f"resampled_{speaker}_{digit}.wav")
             process_audio_segment(input_path, output_path)
 
+def collapse_sequence(seq):
+    result = []
+    prev_char = None
+    for char in seq:
+        if char != prev_char and char != '^':  # Ignore blanks and duplicates
+            result.append(char)
+        prev_char = char
+    return result
+
 
 if __name__ == "__main__":
 

@@ -590,8 +590,8 @@ if __name__ == "__main__":
     max_prob, backtrace, path = forward_ctc_max(pred, expanded_target)
     plot_aligned_sequence(pred, path, expanded_target, alphabet)
     plot_backtrace(backtrace, path, pred, alphabet)
-    print(f"Most probable path probability: {max_prob}")
-    print(f"Most probable path: {path}")
+    print(f"Most probable path probability: {max_prob}") # 0.04032000154256821
+    print(f"Most probable path: {path}") # [1, 3, 3, 5, 6] 
     
 
 

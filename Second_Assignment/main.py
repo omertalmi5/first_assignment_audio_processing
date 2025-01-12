@@ -200,6 +200,27 @@ def dtw_distance_matrix(spectrograms, db_speaker, target_speakers, folder_name, 
 
     return distance_matrix
 
+def create_confusion_matrix(tensor, threshold, name, folder_name):
+
+
+    os.makedirs(folder_name, exist_ok=True)
+
+    # Calculate confusion matrix
+    confusion_matrix = np.sum((tensor <= threshold).astype(int), axis=0)
+
+    # Plot confusion matrix heatmap
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(confusion_matrix, annot=True, fmt="d", cmap="Blues")
+    plt.xlabel("True")
+    plt.ylabel("Predicted")
+    plt.title(f"Confusion Matrix - {name}")
+
+    # Save the plot as an image in the specified folder
+    image_path = os.path.join(folder_name, f"confusion_matrix_{name}.png")
+    plt.savefig(image_path)
+    plt.close()
+
+    return confusion_matrix
 
 def calc_classification_precision(distance_matrix, threshold):
     """
@@ -515,10 +536,11 @@ if __name__ == "__main__":
 
     threshold_value = 10500
 
-    # Assuming training_dtw_matrix is the computed DTW distance matrix for the training set
+
     precision = calc_classification_precision(training_distance_matrix, threshold_value)
     print(f"Classification Precision: {precision:.4f}")
 
+    conf_mat= create_confusion_matrix(evaluation_distance_matrix,threshold_value, "" , "confutiom_matrices")
     precision = calc_classification_precision(evaluation_distance_matrix, threshold_value)
     print(f"Classification Precision: {precision:.4f}")
 
@@ -563,10 +585,12 @@ if __name__ == "__main__":
 
     threshold_value = 50
     print("AGC & Norm:")
-    # Assuming training_dtw_matrix is the computed DTW distance matrix for the training set
+
+
     precision = calc_classification_precision(training_distance_matrix, threshold_value)
     print(f"Classification Precision: {precision:.4f}")
 
+    conf_mat= create_confusion_matrix(evaluation_distance_matrix,threshold_value, "AGC & Norm" , "confutiom_matrices_AGC")
     precision = calc_classification_precision(evaluation_distance_matrix, threshold_value)
     print(f"Classification Precision: {precision:.4f}")
 
